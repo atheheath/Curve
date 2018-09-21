@@ -20,14 +20,16 @@ docker build --tag curve .
 docker build --tag curve-dev .
 ```
 
-### To run depolyment container
+### To run deployment container
 ```bash
 docker run -p 8890:8080 -it curve 
 ```
 
 ### To run development container
 ```bash
-docker run -v Curve:/root/Curve -p 8890:8080 -it curve-dev
+docker run -v $(pwd)/Curve:/root/Curve -p 8890:8080 -it curve-dev /bin/bash
+./Curve/control.sh start
+
 ```
 ### Run and stop
 

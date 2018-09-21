@@ -84,6 +84,8 @@ class DataDataname(Resource):
             return self.render(msg='%s is exists' % data_name, status=422)
         if len(request.files) < 1:
             return self.render(msg='expect file input', status=422)
+        elif len(request.files) > 1:
+            return self.render(msg='expected only one file input at a time', status=422)
         upload_file = request.files.values()[0]
         try:
             # points, time_formatter = self._parse_file(upload_file)  # parse data in csv
@@ -165,14 +167,14 @@ class DataDataname(Resource):
         return points, formatter
 
     def _parse_file_pd(self, upload_file):
+
         data = pd.read_csv(upload_file)
         if "timestamp" in data.columns.values and "value" in data.columns.values:
             final_data = pd.DataFrame({
                 # put timestamp into unix timestamp
-                "timestamp": pd.to_datetime(data["timestamp"]).values.astype(np.int64) // (10 ** 9),
+                "timestamp": pd.to_datetime(data["timestamp"]).values.astype(np.int64),
                 "value": data["value"].apply(self._parse_value),
             },
-            index=pd.to_datetime(data["timestamp"]).values.astype(np.int64) // (10 ** 9))
             if "label" in data.columns.values:
                 final_data["label"] = data["label"].apply(self._parse_label)
 
@@ -186,29 +188,18 @@ class DataDataname(Resource):
         # TODO handle more than just unix timestamp
         formatter = E_TIME_FORMATTER.unix
 
-        points = final_data.to_dict('index')
-        points = {k : (v['timestamp'], v['value'], v['label']) for k,v in points.iteritems()}
+        final_data.set_index('timestamp')
 
-        # points = {}
-        # reader = csv.reader(upload_file)
-        # formatter = None
-        # for line in reader:
-        #     if formatter is None:
-        #         formatter = self._find_time_format(line[0])
-        #     if formatter is not None:
-        #         try:
-        #             timestamp = formatter.str2time(line[0])
-        #             value = None
-        #             if len(line) > 1:
-        #                 value = self._parse_value(line[1])
-        #             label = None
-        #             if len(line) > 2:
-        #                 label = self._parse_label(line[2])
-        #             points[timestamp] = (timestamp, value, label)
-        #         except ValueError as e:
-        #             msg = 'line %d: %s' % (reader.line_num, e.message)
-        #             current_app.logger.error(msg)
-        #             raise Exception(msg)
+        raise ValueError("final data shape: {}".format(final_data.shape))
+
+        raise ValueError("points blah: {}".format(final_data.head()))
+
+        points = final_data.to_dict('index')
+        points = {k : (k, v['value'], v['label']) for k,v in points.iteritems()}
+
+        
+        # raise ValueError("points keys: {}".format(len(points[1]))
+        
         return points, formatter
 
 
