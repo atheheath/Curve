@@ -28,8 +28,7 @@ docker run -p 8890:8080 -it curve
 ### To run development container
 ```bash
 docker run -v $(pwd)/Curve:/root/Curve -p 8890:8080 -it curve-dev /bin/bash
-./Curve/control.sh start
-
+./Curve/control.sh start-dev
 ```
 ### Run and stop
 
