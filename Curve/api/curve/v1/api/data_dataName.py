@@ -85,8 +85,6 @@ class DataDataname(Resource):
             return self.render(msg='%s is exists' % data_name, status=422)
         if len(request.files) < 1:
             return self.render(msg='expect file input', status=422)
-
-        # gets the uploaded csv file
         upload_file = request.files.values()[0]
         try:
             # parses the incoming csv into long format
@@ -201,6 +199,7 @@ period: {}""".format(start_time, end_time, period))
         return points, formatter
 
     def _parse_file_pd(self, upload_file):
+
         data = pd.read_csv(upload_file)
         if "timestamp" in data.columns.values and "value" in data.columns.values:
             final_data = pd.DataFrame({
@@ -232,29 +231,9 @@ number points with not None value: {}""".format(len(points), len([k for k,v in p
         # TODO handle more than just unix timestamp
         formatter = E_TIME_FORMATTER.unix
 
-        # points = final_data.to_dict('index')
-        # points = {k : (v['timestamp'], v['value'], v['label']) for k,v in points.iteritems()}
-
-        # points = {}
-        # reader = csv.reader(upload_file)
-        # formatter = None
-        # for line in reader:
-        #     if formatter is None:
-        #         formatter = self._find_time_format(line[0])
-        #     if formatter is not None:
-        #         try:
-        #             timestamp = formatter.str2time(line[0])
-        #             value = None
-        #             if len(line) > 1:
-        #                 value = self._parse_value(line[1])
-        #             label = None
-        #             if len(line) > 2:
-        #                 label = self._parse_label(line[2])
-        #             points[timestamp] = (timestamp, value, label)
-        #         except ValueError as e:
-        #             msg = 'line %d: %s' % (reader.line_num, e.message)
-        #             current_app.logger.error(msg)
-        #             raise Exception(msg)
+        
+        # raise ValueError("points keys: {}".format(len(points[1]))
+        
         return points, formatter
 
 
