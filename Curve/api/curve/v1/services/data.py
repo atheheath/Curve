@@ -136,13 +136,14 @@ class DataService(object):
             Raw.data_id.is_(self.get_id()),
             Raw.timestamp.between(start_time, end_time)
         ))
-        data_raw = {point.timestamp: point for point in data_raw}
-        line = []
-        for timestamp in range(start_time, end_time, period):
-            if timestamp in data_raw:
-                line.append(data_raw[timestamp])
-            else:
-                line.append(Raw(timestamp=timestamp))
+        # data_raw = {point.timestamp: point for point in data_raw}
+        line = [Raw(timestamp=point.timestamp, value=point.value) for point in data_raw]
+        # line = []
+        # for timestamp in range(start_time, end_time, period):
+        #     if timestamp in data_raw:
+        #         line.append(data_raw[timestamp])
+        #     else:
+        #         line.append(Raw(timestamp=timestamp))
         return line
 
     def get_thumb(self):

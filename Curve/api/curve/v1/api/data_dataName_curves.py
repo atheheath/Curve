@@ -40,8 +40,12 @@ class DataDatanameCurves(Resource):
         if not data_service.auth_read():
             return self.render(msg='%s: data access forbidden' % data_name, status=403)
         plugin = Plugin(data_service)
+
         start_time = g.args['startTime'] / 1000
         end_time = g.args['endTime'] / 1000
+        # start_time = g.args['startTime']
+        # end_time = g.args['endTime']
+
         # get raw
         line = data_service.get_line(start_time, end_time)
         # get base line
