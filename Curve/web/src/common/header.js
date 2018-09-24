@@ -46,7 +46,9 @@ export default class ViewLayout extends Component {
             <div>
                 <div className="header"
                     style= {{height: '50px', backgroundColor: '#388ff7', padding: '0px', lineHeight: '50px'}}>
-                    <div className="logo">Curve</div>
+                    <a href="/">
+                        <div className="logo">Curve</div>
+                    </a>
                 </div>
                 <div style={{background: '#fff', padding: 0, margin: 0, minHeight: 580, position: 'relative'}}>
                    {this.props.children}
