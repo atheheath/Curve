@@ -83,14 +83,14 @@ def create_app():
         redirect to index
         :return:
         """
-        return flask.redirect('/web/index.html')
+        return flask.redirect('/api-doc/index.html')
 
-    @app.route('/web/swagger-ui<regex("$"):url>')
-    def swagger_index(url=None):
-        """
-        redirect to index
-        :return:
-        """
-        return flask.redirect('/web/swagger-ui/index.html')
+    # @app.route('/web/swagger-ui<regex("$"):url>')
+    # def swagger_index(url=None):
+    #     """
+    #     redirect to index
+    #     :return:
+    #     """
+    #     return flask.redirect('/web/swagger-ui/index.html')
 
     return app

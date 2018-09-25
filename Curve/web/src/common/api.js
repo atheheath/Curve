@@ -8,7 +8,7 @@ let apis = {};
 
 let DEV = false;
 let COMMON_SERVER = '';
-// COMMON_SERVER = 'http://localhost:8080';
+COMMON_SERVER = 'http://localhost:8081';
 
 let apiConfig = {
     // Get the operation menu

@@ -22,23 +22,32 @@ docker build --tag curve-dev .
 
 ### To run deployment container
 ```bash
-docker run -p 8890:8080 -it curve 
+docker run -it -p 8080:8080 -p 8081:8081 curve
 ```
-
 ### To run development container
 ```bash
-docker run -v $(pwd)/Curve:/root/Curve -p 8890:8080 -it curve-dev /bin/bash
-./Curve/control.sh start-dev
+docker run -v $(pwd)/Curve:/root/Curve -p 8080:8080 -p 8081:8081 -it curve-dev /bin/bash
 ```
+Then within the container to build:
+```bash
+./build-backend.sh
+./build-frontend.sh
+```
+
 ### Run and stop
 
-Simply use control.sh to start or stop Curve.
-
+To start and stop Curve backend
 ```bash
-# ./control.sh start
-# ./control.sh stop
+./deploy-backend start-dev
+./deploy-backend stop
 ```
-Server will blind 8080 by default, you can change it in `./api/uwsgi.ini`.
+
+To reload backend
+```bash
+./deploy-backend reload-dev
+```
+
+Server will blind 8080 and 8081 by default, you can change it in `./api/uwsgi.ini`.
 
 > The first start will take a while because of the compilation. 
 > If you pull updates from github, Rebuild will be triggered during start or reload.
@@ -136,6 +145,12 @@ GitHub Oauth is supported, please put a configuration file into ```api/curve/aut
 ```
 
 > [Doc:Creating-An-Github-Oauth-App](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/)
+
+### Data API Documentation
+
+API documentation lives at localhost:8081. This is used for data management separate from the frontend
+
+`localhost:8081`
 
 ### Change Log
 * 2018-08-07  [Function Optimization]: Refactoring code

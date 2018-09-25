@@ -12,13 +12,13 @@ import os
 
 file_path = os.path.abspath(os.path.dirname(__file__))
 
-STATIC_SERVER = 'http://localhost:8080'
-API_SERVER = 'http://localhost:8080'
-STATIC_FOLDER = 'web'
-STATIC_PATH = os.path.join(file_path, 'web')
+STATIC_SERVER = 'http://localhost:8081'
+API_SERVER = 'http://localhost:8081'
+STATIC_FOLDER = 'api-doc'
+STATIC_PATH = os.path.join(file_path, STATIC_FOLDER)
 INDEX_PAGE = '/' + STATIC_FOLDER + '/index.html'
 DEFAULT_HOST = '0.0.0.0'
-DEFAULT_PORT = 8080
+DEFAULT_PORT = 8081
 
 SAMPLE_PIXELS = 1366
 

@@ -48,117 +48,6 @@ version() {
     fi
 }
 
-check_web() {
-    readonly BUILD_PATH="${G_WEB_DIR}/build"
-    readonly BUILD_VERSION_FILE="${BUILD_PATH}/version"
-    BUILD_VERSION=''
-    if [ -e ${BUILD_VERSION_FILE} ]; then
-        BUILD_VERSION=`cat ${BUILD_VERSION_FILE}`
-    fi
-    readonly DEPLOY_PATH="${G_API_DIR}/curve/web"
-    readonly DEPLOY_VERSION_FILE="${DEPLOY_PATH}/version"
-    DEPLOY_VERSION=''
-    if [ -e ${DEPLOY_VERSION_FILE} ]; then
-        DEPLOY_VERSION=`cat ${DEPLOY_VERSION_FILE}`
-    fi
-
-    if [ ${G_VERSION}x != 'x' -a ${G_VERSION}x == ${DEPLOY_VERSION}x ]; then
-        return
-    fi
-
-    cutoff
-    echo "build web..."
-    if [ ${G_VERSION}x == 'x' -o ${G_VERSION}x != ${BUILD_VERSION}x ]; then
-        cd ${G_WEB_DIR}
-        npm install
-        npm run build
-        echo ${G_VERSION} > ${BUILD_VERSION_FILE}
-    fi
-    if [ -e ${DEPLOY_PATH} ]; then
-        rm -rf ${DEPLOY_PATH}
-    fi
-    mv ${BUILD_PATH} ${DEPLOY_PATH}
-    echo "web built."
-    cutoff
-}
-
-check_py() {
-    readonly VENV_VERSION_FILE="${G_VENV_DIR}/version"
-    VENV_VERSION=''
-    if [ -e ${VENV_VERSION_FILE} ]; then
-        VENV_VERSION=`cat ${VENV_VERSION_FILE}`
-    fi
-
-    if [ ${G_VERSION}x != 'x' -a ${G_VERSION}x == ${VENV_VERSION}x ]; then
-        return
-    fi
-
-    cutoff
-    echo "deploy venv..."
-    if [ ! -e "${G_ROOT_DIR}/venv" ]; then
-        # pip install --upgrade pip
-        # pip install virtualenv
-        virtualenv --no-site-packages ${G_VENV_DIR}
-    fi
-    source ${G_VENV_DIR}/bin/activate
-    pip install -r ${G_API_DIR}/requirements.txt
-    if [ ! -e ${G_VENV_DIR}/bin/curve_uwsgi ]; then
-        cd ${G_VENV_DIR}/bin
-        ln -s uwsgi curve_uwsgi
-        cd -
-    fi
-    echo ${G_VERSION} > ${VENV_VERSION_FILE}
-    deactivate
-    echo "venv deployed."
-    cutoff
-}
-
-check_api() {
-    readonly SWAGGER_UI_DIR="${G_API_DIR}/curve/web/swagger-ui"
-    readonly SWAGGER_UI_VERSION_FILE="${SWAGGER_UI_DIR}/version"
-    SWAGGER_UI_VERSION=''
-    if [ -e ${SWAGGER_UI_VERSION_FILE} ]; then
-        SWAGGER_UI_VERSION=`cat ${SWAGGER_UI_VERSION_FILE}`
-    fi
-
-    if [ ${G_VERSION}x != 'x' -a ${G_VERSION}x == ${SWAGGER_UI_VERSION}x ]; then
-        return
-    fi
-
-    cutoff
-    echo "deploy api..."
-    cd ${G_ROOT_DIR}
-    source ${G_VENV_DIR}/bin/activate
-    pip install swagger-py-codegen==0.2.9
-    swagger_py_codegen --ui --spec -s doc/web_api.yaml api -p curve
-    deactivate
-    if [ -e ${G_API_DIR}/curve/web/swagger-ui ]; then
-        rm -rf ${G_API_DIR}/curve/web/swagger-ui
-    fi
-    mv ${G_API_DIR}/curve/static/swagger-ui ${G_API_DIR}/curve/web/
-    if [ -e ${G_API_DIR}/curve/web/static/v1 ]; then
-        rm -rf ${G_API_DIR}/curve/web/static/v1
-    fi
-    mv ${G_API_DIR}/curve/static/v1 ${G_API_DIR}/curve/web/static/
-    rm -rf ${G_API_DIR}/curve/static
-
-    patch ${G_API_DIR}/curve/web/swagger-ui/index.html ${G_ROOT_DIR}/opt/swagger-ui/index.html.patch
-    echo ${G_VERSION} > ${SWAGGER_UI_VERSION_FILE}
-    echo "api deployed."
-    cutoff
-}
-
-check_path() {
-    mkdir -p ${G_API_DIR}/log
-}
-
-check() {
-    check_web
-    check_py
-    check_api
-    check_path
-}
-
 start() {
     if [ -e ${G_API_DIR}/uwsgi.pid ]; then
         PID=`cat ${G_API_DIR}/uwsgi.pid`
@@ -167,7 +56,7 @@ start() {
             return
         fi
     fi
-    check
+
     if [ `ps -ef | fgrep curve_uwsgi | fgrep -v 'grep' | wc -l` -gt 0 ]; then
         ps -ef | fgrep curve_uwsgi | fgrep -v 'grep' | awk '{ print $2 }' | xargs kill -9
     fi
@@ -186,15 +75,15 @@ start-dev() {
             return
         fi
     fi
-    check
+
     if [ `ps -ef | fgrep curve_uwsgi | fgrep -v 'grep' | wc -l` -gt 0 ]; then
         ps -ef | fgrep curve_uwsgi | fgrep -v 'grep' | awk '{ print $2 }' | xargs kill -9
     fi
-    echo "start Curve Dev..."
+    echo "start Curve..."
     source ${G_VENV_DIR}/bin/activate
     cd ${G_API_DIR}
     ${G_VENV_DIR}/bin/curve_uwsgi uwsgi-dev.ini
-    echo "Curve Dev started."
+    echo "Curve started."
 }
 
 stop() {
@@ -206,7 +95,6 @@ stop() {
 }
 
 reload() {
-    check
     if [ -e ${G_API_DIR}/uwsgi.pid ]; then
         PID=`cat ${G_API_DIR}/uwsgi.pid`
         if [ `ps -ef | fgrep curve_uwsgi | fgrep ${PID} | wc -l` -gt 0 ]; then
@@ -229,6 +117,29 @@ reload() {
     echo "Curve reloaded."
 }
 
+reload-dev() {
+    if [ -e ${G_API_DIR}/uwsgi.pid ]; then
+        PID=`cat ${G_API_DIR}/uwsgi.pid`
+        if [ `ps -ef | fgrep curve_uwsgi | fgrep ${PID} | wc -l` -gt 0 ]; then
+            echo "reload Curve..."
+            source ${G_VENV_DIR}/bin/activate
+            cd ${G_API_DIR}
+            ${G_VENV_DIR}/bin/curve_uwsgi --reload uwsgi.pid
+            echo "Curve reloaded."
+            return
+        fi
+    fi
+    echo "clean Curve..."
+    if [ `ps -ef | fgrep curve_uwsgi | fgrep -v 'grep' | wc -l` -gt 0 ]; then
+        ps -ef | fgrep curve_uwsgi | fgrep -v 'grep' | awk '{ print $2 }' | xargs kill -9
+    fi
+    echo "start Curve..."
+    source ${G_VENV_DIR}/bin/activate
+    cd ${G_API_DIR}
+    ${G_VENV_DIR}/bin/curve_uwsgi uwsgi-dev.ini
+    echo "Curve reloaded."
+}
+
 terminate() {
     echo "terminate Curve..."
     if [ `ps -ef | fgrep curve_uwsgi | fgrep -v 'grep' | wc -l` -gt 0 ]; then
@@ -239,10 +150,6 @@ terminate() {
 }
 
 case "${1}" in
-check)
-    version
-    check
-    ;;
 start)
     version
     start
@@ -257,6 +164,10 @@ stop)
 reload)
     version
     reload
+    ;;
+reload-dev)
+    version
+    reload-dev
     ;;
 terminate)
     terminate
